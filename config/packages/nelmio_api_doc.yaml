@@ -1,0 +1,47 @@
+nelmio_api_doc:
+    documentation:
+        paths:
+            /api/login_check:
+                post:
+                    tags:
+                        - login
+                        - jwt
+                        - token
+                    summary: Authenticate and get JWT token.
+                    requestBody:
+                        description: Authenticate and get JWT token.
+                        content:
+                            application/json:
+                                schema:
+                                    type: object
+                                    properties:
+                                        username:
+                                            type: string
+                                        password:
+                                            type: string
+                    responses:
+                        '200':
+                            description: Authenticated.
+                            content:
+                                application/json:
+                                    schema:
+                                        type: object
+                                        properties:
+                                            token:
+                                                type: string
+        info:
+            title: My App
+            description: This is an awesome app!
+            version: 1.0.0
+        components:
+            securitySchemes:
+                Bearer:
+                    type: http
+                    scheme: bearer
+                    bearerFormat: JWT
+        security:
+            -   Bearer: [ ]
+    areas: # to filter documented areas
+        path_patterns:
+            - ^/api(?!/doc$) # Accepts routes under /api except /api/doc
+              
