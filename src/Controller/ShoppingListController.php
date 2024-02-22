@@ -7,17 +7,18 @@ namespace App\Controller;
 use App\Controller\Request\CreateShoppingList;
 use App\Controller\Request\PatchShoppingList;
 use App\Controller\Response\GetCollectionShoppingListResponse;
+use App\Controller\Response\GetCollectionShoppingListResponseBounded;
 use App\Controller\Response\GetShoppingListItemResponse;
 use App\Entity\ShoppingList;
 use App\Repository\ShoppingListRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use OpenApi\Attributes as OA;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Serializer\SerializerInterface;
 
 #[OA\Tag(name: 'Shopping List')]
 #[Route('api/shopping-list')]
@@ -43,21 +44,41 @@ class ShoppingListController extends AbstractController
         return new JsonResponse();
     }
 
+    #[OA\Response(
+        response: Response::HTTP_OK,
+        description: 'Rejection reason lookup response.',
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: GetCollectionShoppingListResponseBounded::class)),
+        )
+    )]
     #[Route('/', methods: ['get'])]
     public function getCollection(): Response
     {
         $response = [];
         $shoppingLists = $this->shoppingListRepository->findForUser($this->getUser());
-        foreach ($shoppingLists as $shoppingList) {
+        foreach ($shoppingLists['userLists'] as $shoppingList) {
             $shoppingListItems = [];
             foreach ($shoppingList->getShoppingListItems() as $shoppingListItem) {
                 $shoppingListItems[] = new GetShoppingListItemResponse($shoppingListItem->getId(), $shoppingListItem->getName(), $shoppingListItem->getQuantity(), $shoppingListItem->getQuantityUnit(), $shoppingListItem->isPurchased());
             }
             $response['owned'][] = new GetCollectionShoppingListResponse($shoppingList->getId(), $shoppingList->getName(), $shoppingList->isFulfilled(), $shoppingListItems);
         }
+        foreach ($shoppingLists['sharedLists'] as $shoppingList) {
+            $shoppingListItems = [];
+            foreach ($shoppingList->getShoppingListItems() as $shoppingListItem) {
+                $shoppingListItems[] = new GetShoppingListItemResponse($shoppingListItem->getId(), $shoppingListItem->getName(), $shoppingListItem->getQuantity(), $shoppingListItem->getQuantityUnit(), $shoppingListItem->isPurchased());
+            }
+            $response['shared'][] = new GetCollectionShoppingListResponse($shoppingList->getId(), $shoppingList->getName(), $shoppingList->isFulfilled(), $shoppingListItems);
+        }
         return new JsonResponse($response);
     }
 
+    #[OA\Response(
+        response: Response::HTTP_OK,
+        description: 'Rejection reason lookup response.',
+        content: new Model(type: GetCollectionShoppingListResponse::class)
+    )]
     #[Route('/{id}', methods: ['get'])]
     public function get(ShoppingList $shoppingList): Response
     {

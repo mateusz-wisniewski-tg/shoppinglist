@@ -25,15 +25,16 @@ class ShoppingListRepository extends ServiceEntityRepository
     public function findForUser(User $user): array
     {
 
-            $qb = $this->createQueryBuilder('s');
-
-            return $qb->join('s.sharees', 'sha')
-            ->andWhere($qb->expr()->orX(
-                'sha.user = :userId',
-                's.user = :userId'
-            ))
-            ->setParameter('userId', $user)
+            $userLists = $this->findBy(["user" => $user]);
+            $shareeLists = $this->createQueryBuilder('s')->join('s.sharees', 'sha')
+                ->andWhere('sha.user = :user')
+                ->setParameter('user', $user)
                 ->getQuery()->getResult();
+
+            return [
+                'userLists' => $userLists,
+                'sharedLists' => $shareeLists
+            ];
     }
 
 //    /**
