@@ -5,12 +5,9 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Controller\Request\CreateSharee;
-use App\Controller\Request\CreateShoppingList;
 use App\Controller\Response\GetCollectionShareeResponse;
-use App\Controller\Response\GetCollectionShoppingListResponse;
-use App\Controller\Response\GetShoppingListItemResponse;
 use App\Entity\Sharee;
-use App\Entity\ShoppingList;
+use App\Entity\User;
 use App\Repository\ShareeRepository;
 use App\Repository\ShoppingListRepository;
 use App\Repository\UserRepository;
@@ -21,7 +18,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Serializer\SerializerInterface;
 use OpenApi\Attributes as OA;
 use TGF\PartnerErrors\Domain\Model\PartnerError;
 
@@ -66,15 +62,12 @@ class ShareeController extends AbstractController
     }
 
     #[Route('/{id}', methods: ['delete'])]
-    public function delete(Sharee $sharee): Response
+    public function delete(User $user): Response
     {
-        if($sharee->getOwner() === $this->getUser()){
-            $this->entityManager->remove($sharee);
+            $this->shareeRepository->deleteByUserAndOwner($user, $this->getUser());
             $this->entityManager->flush();
 
             return new JsonResponse();
-        }
-        return new JsonResponse("Not the owner of that sharee", 400);
     }
 
     #[OA\Response(

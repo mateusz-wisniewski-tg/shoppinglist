@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Sharee;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -21,6 +22,17 @@ class ShareeRepository extends ServiceEntityRepository
         parent::__construct($registry, Sharee::class);
     }
 
+
+    public function deleteByUserAndOwner(User $user, User $owner)
+    {
+        return $this->createQueryBuilder('s')->delete()
+            ->where('s.user = :user')
+            ->andWhere('s.owner = :owner')
+            ->setParameter('user', $user)
+            ->setParameter('owner', $owner)
+            ->getQuery()
+            ->execute();
+    }
 //    /**
 //     * @return Sharee[] Returns an array of Sharee objects
 //     */
